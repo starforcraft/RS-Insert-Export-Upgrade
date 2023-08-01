@@ -116,6 +116,7 @@ dependencies {
         transitive false
     }
 
+    implementation fg.deobf('curse.maven:spark-361579:4587309')
     implementation fg.deobf('curse.maven:libx-412525:4606863')
 }
 
