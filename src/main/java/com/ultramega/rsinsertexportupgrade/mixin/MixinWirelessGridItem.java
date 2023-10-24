@@ -64,6 +64,8 @@ public abstract class MixinWirelessGridItem extends Item {
 
             INetwork network = rsInsertExportUpgrade$getNetwork(level.getServer(), stack, player::sendSystemMessage);
 
+            if(network == null) return;
+
             for (INetworkNodeGraphEntry entry : network.getNodeGraph().all()) {
                 INetworkNode node = entry.getNode();
 
