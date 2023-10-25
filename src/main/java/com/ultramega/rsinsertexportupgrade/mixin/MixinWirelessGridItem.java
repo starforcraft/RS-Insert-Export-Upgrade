@@ -11,8 +11,10 @@ import com.refinedmods.refinedstorage.api.util.IFilter;
 import com.refinedmods.refinedstorage.api.util.StackListEntry;
 import com.refinedmods.refinedstorage.item.WirelessGridItem;
 import com.refinedmods.refinedstorage.util.NetworkUtils;
+import com.refinedmods.refinedstorageaddons.item.WirelessCraftingGridItem;
 import com.ultramega.rsinsertexportupgrade.RSInsertExportUpgrade;
 import com.ultramega.rsinsertexportupgrade.item.UpgradeItem;
+import com.ultramega.universalgrid.item.WirelessUniversalGridItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -45,14 +47,14 @@ import java.util.function.Consumer;
 
 import static com.refinedmods.refinedstorage.item.NetworkItem.*;
 
-@Mixin(WirelessGridItem.class)
+@Mixin({WirelessGridItem.class, WirelessCraftingGridItem.class, WirelessUniversalGridItem.class})
 public abstract class MixinWirelessGridItem extends Item {
     protected MixinWirelessGridItem(Properties properties) {
         super(properties);
     }
 
     @Override
-    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
+    public void inventoryTick(@NotNull ItemStack stack, @NotNull Level level, @NotNull Entity entity, int slotId, boolean isSelected) {
         super.inventoryTick(stack, level, entity, slotId, isSelected);
 
         if(!stack.hasTag() || level.isClientSide)
@@ -84,8 +86,8 @@ public abstract class MixinWirelessGridItem extends Item {
 
             if(!inRange) return;
 
-            if(stack.getTag().contains("Inventory_1")) {
-                ListTag tagList = stack.getTag().getList("Inventory_1", Tag.TAG_COMPOUND);
+            if(stack.getTag().contains("Inventory_2")) {
+                ListTag tagList = stack.getTag().getList("Inventory_2", Tag.TAG_COMPOUND);
 
                 for (int i = 0; i < tagList.size(); i++) {
                     boolean isInsertUpgrade = tagList.getCompound(i).getString("id").equals(new ResourceLocation(RSInsertExportUpgrade.MOD_ID, "insert_upgrade").toString());
