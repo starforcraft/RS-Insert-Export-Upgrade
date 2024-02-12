@@ -46,14 +46,4 @@ public abstract class MixinBaseScreen extends AbstractContainerScreen implements
             }
         }
     }
-
-    @Override
-    @Unique
-    public void rsInsertExportUpgrade$addSideButton(SideButton button) {
-        button.setX(this.leftPos - button.getWidth() - 2);
-        button.setY(this.topPos + this.sideButtonY);
-        this.sideButtonY += button.getHeight() + 2;
-        this.sideButtons.add(button);
-        this.addRenderableWidget(button);
-    }
 }

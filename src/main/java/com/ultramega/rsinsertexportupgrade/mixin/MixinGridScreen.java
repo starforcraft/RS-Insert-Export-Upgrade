@@ -61,9 +61,9 @@ public abstract class MixinGridScreen extends BaseScreen {
             for (int i = 0; i < getMenu().slots.size(); i++) {
                 if (getMenu().getSlot(i) instanceof SlotItemHandler itemHandler && itemHandler.getItemHandler() instanceof UpgradeItemHandler) {
                     if (itemHandler.getItem().getItem() == ModItems.INSERT_UPGRADE.get()) {
-                        ((ISideButton) this).rsInsertExportUpgrade$addSideButton(new UpgradeSideButton(this, UpgradeType.INSERT, itemHandler.getSlotIndex()));
+                        this.addSideButton(new UpgradeSideButton(this, UpgradeType.INSERT, itemHandler.getSlotIndex()));
                     } else if (itemHandler.getItem().getItem() == ModItems.EXPORT_UPGRADE.get()) {
-                        ((ISideButton) this).rsInsertExportUpgrade$addSideButton(new UpgradeSideButton(this, UpgradeType.EXPORT, itemHandler.getSlotIndex()));
+                        this.addSideButton(new UpgradeSideButton(this, UpgradeType.EXPORT, itemHandler.getSlotIndex()));
                     }
                 }
             }
