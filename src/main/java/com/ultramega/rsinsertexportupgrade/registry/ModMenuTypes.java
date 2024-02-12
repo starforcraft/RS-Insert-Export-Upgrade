@@ -13,7 +13,7 @@ public class ModMenuTypes {
     public static final DeferredRegister<MenuType<?>> MENU_TYPES = DeferredRegister.create(ForgeRegistries.MENU_TYPES, RSInsertExportUpgrade.MOD_ID);
 
     public static final RegistryObject<MenuType<UpgradeContainerMenu>> INSERT_UPGRADE = MENU_TYPES.register("insert_upgrade", () ->
-            IForgeMenuType.create((windowId, inv, data) -> new UpgradeContainerMenu(UpgradeType.INSERT, inv.player, inv.getSelected(), windowId)));
+            IForgeMenuType.create((windowId, inv, data) -> new UpgradeContainerMenu(UpgradeType.INSERT, inv.player, data == null ? inv.getSelected() : data.readItem(), windowId, data == null ? -1 : data.readInt())));
     public static final RegistryObject<MenuType<UpgradeContainerMenu>> EXPORT_UPGRADE = MENU_TYPES.register("export_upgrade", () ->
-            IForgeMenuType.create((windowId, inv, data) -> new UpgradeContainerMenu(UpgradeType.EXPORT, inv.player, inv.getSelected(), windowId)));
+            IForgeMenuType.create((windowId, inv, data) -> new UpgradeContainerMenu(UpgradeType.EXPORT, inv.player, data == null ? inv.getSelected() : data.readItem(), windowId, data == null ? -1 : data.readInt())));
 }

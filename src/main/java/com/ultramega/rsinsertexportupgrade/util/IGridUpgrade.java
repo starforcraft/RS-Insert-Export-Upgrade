@@ -6,6 +6,7 @@ import net.minecraftforge.items.IItemHandlerModifiable;
 import java.util.List;
 
 public interface IGridUpgrade {
-    List<IFilter> rsInsertExportUpgrade$getUpgrades();
+    List<IFilter> rsInsertExportUpgrade$getFilter();
+
     IItemHandlerModifiable rsInsertExportUpgrade$getUpgrade();
 }

@@ -2,23 +2,43 @@ package com.ultramega.rsinsertexportupgrade.container;
 
 import com.refinedmods.refinedstorage.container.BaseContainerMenu;
 import com.refinedmods.refinedstorage.container.slot.filter.FilterSlot;
+import com.refinedmods.refinedstorage.util.StackUtils;
 import com.ultramega.rsinsertexportupgrade.inventory.item.ConfiguredItemsInUpgradeItemHandler;
+import com.ultramega.rsinsertexportupgrade.registry.ModItems;
 import com.ultramega.rsinsertexportupgrade.registry.ModMenuTypes;
 import com.ultramega.rsinsertexportupgrade.util.UpgradeType;
+import net.minecraft.world.Container;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 public class UpgradeContainerMenu extends BaseContainerMenu {
     private final UpgradeType type;
-    private final ItemStack upgradeItem;
+    private ItemStack upgradeItem;
+    private ItemStack gridItem;
+    public final int selectedSideButton;
 
-    public UpgradeContainerMenu(UpgradeType type, Player player, ItemStack upgradeItem, int windowId) {
+    public UpgradeContainerMenu(UpgradeType type, Player player, ItemStack stack, int windowId, int selectedSideButton) {
         super(type == UpgradeType.INSERT ? ModMenuTypes.INSERT_UPGRADE.get() : ModMenuTypes.EXPORT_UPGRADE.get(), null, player, windowId);
         this.type = type;
-        this.upgradeItem = upgradeItem;
 
-        int y = 20;
+        if (selectedSideButton != -1 && stack.getItem() != ModItems.INSERT_UPGRADE.get() && stack.getItem() != ModItems.EXPORT_UPGRADE.get()) {
+            this.gridItem = stack;
+
+            Container container = new SimpleContainer(2);
+            StackUtils.readItems(container, 2, stack.getTag());
+
+            if (container.getItem(selectedSideButton).getItem() == (type == UpgradeType.INSERT ? ModItems.INSERT_UPGRADE.get() : ModItems.EXPORT_UPGRADE.get())) {
+                this.upgradeItem = container.getItem(selectedSideButton);
+            }
+        } else {
+            this.upgradeItem = stack;
+        }
+
+        this.selectedSideButton = selectedSideButton;
+
         int x = 8;
+        int y = 20;
 
         ConfiguredItemsInUpgradeItemHandler upgrade = new ConfiguredItemsInUpgradeItemHandler(upgradeItem);
 
@@ -60,6 +80,10 @@ public class UpgradeContainerMenu extends BaseContainerMenu {
 
     public ItemStack getUpgradeItem() {
         return upgradeItem;
+    }
+
+    public ItemStack getGridItem() {
+        return gridItem == null ? upgradeItem : gridItem;
     }
 
     @Override

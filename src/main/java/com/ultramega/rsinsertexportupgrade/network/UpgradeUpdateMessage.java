@@ -13,31 +13,32 @@ public class UpgradeUpdateMessage {
     private final int type;
     private final int mode;
     private final int[] selectedInventorySlots;
+    private final int selectedSideButton;
 
-    public UpgradeUpdateMessage(int type, int mode, int[] selectedInventorySlots) {
+    public UpgradeUpdateMessage(int type, int mode, int[] selectedInventorySlots, int selectedSideButton) {
         this.type = type;
         this.mode = mode;
         this.selectedInventorySlots = selectedInventorySlots;
+        this.selectedSideButton = selectedSideButton;
     }
 
     public static UpgradeUpdateMessage decode(FriendlyByteBuf buf) {
-        return new UpgradeUpdateMessage(buf.readInt(), buf.readInt(), buf.readVarIntArray());
+        return new UpgradeUpdateMessage(buf.readInt(), buf.readInt(), buf.readVarIntArray(), buf.readInt());
     }
 
     public static void encode(UpgradeUpdateMessage message, FriendlyByteBuf buf) {
         buf.writeInt(message.type);
         buf.writeInt(message.mode);
         buf.writeVarIntArray(message.selectedInventorySlots);
+        buf.writeInt(message.selectedSideButton);
     }
 
     public static void handle(UpgradeUpdateMessage message, Supplier<NetworkEvent.Context> ctx) {
         Player player = ctx.get().getSender();
         if (player != null && player.containerMenu instanceof UpgradeContainerMenu containerMenu) {
             ctx.get().enqueueWork(() -> {
-                if(message.type == UpgradeType.INSERT.getId()) {
-                    UpgradeItem.setMode(containerMenu.getUpgradeItem(), message.mode);
-                }
-                UpgradeItem.setSelectedInventorySlots(containerMenu.getUpgradeItem(), message.selectedInventorySlots);
+                UpgradeItem.setSelectedInventorySlots(containerMenu.getGridItem(), message.selectedInventorySlots, message.selectedSideButton);
+                UpgradeItem.setMode(containerMenu.getGridItem(), message.mode, message.selectedSideButton);
             });
         }
 

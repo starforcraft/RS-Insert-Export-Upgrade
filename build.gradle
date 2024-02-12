@@ -115,6 +115,9 @@ dependencies {
     implementation fg.deobf("com.refinedmods:refinedstorage:${rs_version}") {
         transitive false
     }
+    implementation fg.deobf('curse.maven:refinedstorageaddons-272302:4626171')
+    implementation fg.deobf('curse.maven:universalgrid-536160:4625088')
+    implementation fg.deobf('curse.maven:rebornstorage-256662:4861934')
 
     implementation fg.deobf('curse.maven:spark-361579:4587309')
     implementation fg.deobf('curse.maven:libx-412525:4606863')

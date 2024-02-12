@@ -29,7 +29,7 @@ public abstract class MixinGridContainerMenu extends BaseContainerMenu {
 
     @Inject(at = @At("TAIL"), method = "initSlots")
     public void initSlots(CallbackInfo ci) {
-        if(grid instanceof IGridUpgrade wirelessGrid) {
+        if (grid instanceof IGridUpgrade wirelessGrid) {
             rsInsertExportUpgrade$addUpgradeSlots(wirelessGrid);
         }
     }
@@ -37,7 +37,7 @@ public abstract class MixinGridContainerMenu extends BaseContainerMenu {
     @Unique
     private void rsInsertExportUpgrade$addUpgradeSlots(IGridUpgrade wirelessGrid) {
         for (int i = 0; i < 2; ++i) {
-            addSlot(new SlotItemHandler(wirelessGrid.rsInsertExportUpgrade$getUpgrade(), i, 204, 90 + (18 * i)));
+            this.addSlot(new SlotItemHandler(wirelessGrid.rsInsertExportUpgrade$getUpgrade(), i, 204, 90 + (18 * i)));
         }
 
         transferManager.addBiTransfer(getPlayer().getInventory(), wirelessGrid.rsInsertExportUpgrade$getUpgrade());

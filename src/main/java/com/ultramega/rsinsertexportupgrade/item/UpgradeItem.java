@@ -5,6 +5,8 @@ import com.ultramega.rsinsertexportupgrade.container.UpgradeContainerMenu;
 import com.ultramega.rsinsertexportupgrade.registry.ModItems;
 import com.ultramega.rsinsertexportupgrade.util.UpgradeType;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -30,32 +32,58 @@ public class UpgradeItem extends Item {
     }
 
     public static int getMode(ItemStack stack) {
-        return (stack.hasTag() && stack.getTag().contains(NBT_MODE)) ? stack.getTag().getInt(NBT_MODE) : IFilter.MODE_WHITELIST;
+        return (stack.hasTag() && stack.getTag().contains(NBT_MODE)) ? stack.getTag().getInt(NBT_MODE) : IFilter.MODE_BLACKLIST;
     }
 
-    public static void setMode(ItemStack stack, int mode) {
-        if (!stack.hasTag()) {
-            stack.setTag(new CompoundTag());
-        }
+    public static void setMode(ItemStack stack, int mode, int selectedSideButton) {
+        if (stack.getItem() == ModItems.INSERT_UPGRADE.get() || stack.getItem() == ModItems.EXPORT_UPGRADE.get()) {
+            if (!stack.hasTag()) {
+                stack.setTag(new CompoundTag());
+            }
 
-        stack.getTag().putInt(NBT_MODE, mode);
+            stack.getTag().putInt(NBT_MODE, mode);
+        } else {
+            if (stack.getTag().contains("Inventory_2")) {
+                ListTag tagList = stack.getTag().getList("Inventory_2", Tag.TAG_COMPOUND);
+                CompoundTag tag = (CompoundTag) tagList.getCompound(selectedSideButton).get("tag");
+
+                if (tag == null) {
+                    tagList.getCompound(selectedSideButton).put("tag", new CompoundTag());
+                }
+
+                ((CompoundTag) tagList.getCompound(selectedSideButton).get("tag")).putInt(NBT_MODE, mode);
+            }
+        }
     }
 
     public static int[] getSelectedInventorySlots(ItemStack stack) {
         return (stack.hasTag() && stack.getTag().contains(NBT_SELECTED_INVENTORY_SLOTS)) ? stack.getTag().getIntArray(NBT_SELECTED_INVENTORY_SLOTS) : new int[36];
     }
 
-    public static void setSelectedInventorySlots(ItemStack stack, int[] selectedInventorySlots) {
-        if (!stack.hasTag()) {
-            stack.setTag(new CompoundTag());
-        }
+    public static void setSelectedInventorySlots(ItemStack stack, int[] selectedInventorySlots, int selectedSideButton) {
+        if (stack.getItem() == ModItems.INSERT_UPGRADE.get() || stack.getItem() == ModItems.EXPORT_UPGRADE.get()) {
+            if (!stack.hasTag()) {
+                stack.setTag(new CompoundTag());
+            }
 
-        stack.getTag().putIntArray(NBT_SELECTED_INVENTORY_SLOTS, selectedInventorySlots);
+            stack.getTag().putIntArray(NBT_SELECTED_INVENTORY_SLOTS, selectedInventorySlots);
+        } else {
+            if (stack.getTag().contains("Inventory_2")) {
+                ListTag tagList = stack.getTag().getList("Inventory_2", Tag.TAG_COMPOUND);
+                CompoundTag tag = (CompoundTag) tagList.getCompound(selectedSideButton).get("tag");
+
+                if (tag == null) {
+                    tagList.getCompound(selectedSideButton).put("tag", new CompoundTag());
+                }
+
+                ((CompoundTag) tagList.getCompound(selectedSideButton).get("tag")).putIntArray(NBT_SELECTED_INVENTORY_SLOTS, selectedInventorySlots);
+            }
+        }
     }
 
     @Override
     @NotNull
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, @NotNull InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
 
         if (!level.isClientSide) {
@@ -72,7 +100,7 @@ public class UpgradeItem extends Item {
 
                 @Override
                 public AbstractContainerMenu createMenu(int windowId, @NotNull Inventory inventory, @NotNull Player player) {
-                    return new UpgradeContainerMenu(type, player, inventory.getSelected(), windowId);
+                    return new UpgradeContainerMenu(type, player, inventory.getSelected(), windowId, -1);
                 }
             });
         }

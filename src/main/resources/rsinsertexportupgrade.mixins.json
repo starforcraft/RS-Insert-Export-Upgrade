@@ -4,9 +4,12 @@
   "compatibilityLevel": "JAVA_17",
   "mixins": [
     "MixinGridContainerMenu",
-    "MixinGridScreen",
     "MixinWirelessGrid",
     "MixinWirelessGridItem"
+  ],
+  "client": [
+    "MixinBaseScreen",
+    "MixinGridScreen"
   ],
   "minVersion": "0.8"
 }

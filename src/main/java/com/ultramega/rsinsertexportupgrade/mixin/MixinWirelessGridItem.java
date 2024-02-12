@@ -15,6 +15,7 @@ import com.refinedmods.refinedstorageaddons.item.WirelessCraftingGridItem;
 import com.ultramega.rsinsertexportupgrade.RSInsertExportUpgrade;
 import com.ultramega.rsinsertexportupgrade.item.UpgradeItem;
 import com.ultramega.universalgrid.item.WirelessUniversalGridItem;
+import net.gigabit101.rebornstorage.items.ItemWirelessGrid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -40,14 +41,14 @@ import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
 import static com.refinedmods.refinedstorage.item.NetworkItem.*;
 
-@Mixin({WirelessGridItem.class, WirelessCraftingGridItem.class, WirelessUniversalGridItem.class})
+@Mixin({WirelessGridItem.class, WirelessCraftingGridItem.class, WirelessUniversalGridItem.class, ItemWirelessGrid.class})
 public abstract class MixinWirelessGridItem extends Item {
     protected MixinWirelessGridItem(Properties properties) {
         super(properties);
@@ -57,16 +58,16 @@ public abstract class MixinWirelessGridItem extends Item {
     public void inventoryTick(@NotNull ItemStack stack, @NotNull Level level, @NotNull Entity entity, int slotId, boolean isSelected) {
         super.inventoryTick(stack, level, entity, slotId, isSelected);
 
-        if(!stack.hasTag() || level.isClientSide)
+        if (!stack.hasTag() || level.isClientSide)
             return;
 
         //Check if in transmitter range
-        if(entity instanceof Player player) {
+        if (entity instanceof Player player) {
             boolean inRange = false;
 
             INetwork network = rsInsertExportUpgrade$getNetwork(level.getServer(), stack, player::sendSystemMessage);
 
-            if(network == null) return;
+            if (network == null) return;
 
             for (INetworkNodeGraphEntry entry : network.getNodeGraph().all()) {
                 INetworkNode node = entry.getNode();
@@ -84,49 +85,50 @@ public abstract class MixinWirelessGridItem extends Item {
                 }
             }
 
-            if(!inRange) return;
+            if (!inRange) return;
 
-            if(stack.getTag().contains("Inventory_2")) {
+            if (stack.getTag().contains("Inventory_2")) {
                 ListTag tagList = stack.getTag().getList("Inventory_2", Tag.TAG_COMPOUND);
 
                 for (int i = 0; i < tagList.size(); i++) {
                     boolean isInsertUpgrade = tagList.getCompound(i).getString("id").equals(new ResourceLocation(RSInsertExportUpgrade.MOD_ID, "insert_upgrade").toString());
                     CompoundTag tag = (CompoundTag) tagList.getCompound(i).get("tag");
 
-                    if(tag != null) {
+                    if (tag != null) {
                         int[] selectedInventorySlots = tag.getIntArray(UpgradeItem.NBT_SELECTED_INVENTORY_SLOTS);
                         int mode = isInsertUpgrade ? tag.getInt(UpgradeItem.NBT_MODE) : -1;
 
-                        for(int j = 0; j < selectedInventorySlots.length; j++) {
-                            if(selectedInventorySlots[j] >= 1) {
+                        for (int j = 0; j < selectedInventorySlots.length; j++) {
+                            if (selectedInventorySlots[j] >= 1) {
                                 int index = j <= 26 ? j + 9 : j - 27;
                                 ItemStack itemInInventory = player.getInventory().getItem(index);
 
-                                if((!isInsertUpgrade || itemInInventory.getItem() != Items.AIR) && itemInInventory != stack) {
-                                    List<Item> filters = new ArrayList<>();
-                                    if(tag.contains("Inventory_0")) {
+                                if ((!isInsertUpgrade || itemInInventory.getItem() != Items.AIR) && itemInInventory != stack) {
+                                    List<Item> filters = Arrays.asList(new Item[18]);
+                                    if (tag.contains("Inventory_0")) {
                                         ListTag tagList2 = tag.getList("Inventory_0", Tag.TAG_COMPOUND);
 
-                                        for(int k = 0; k < tagList2.size(); k++) {
-                                            String tag2 = tagList2.getCompound(k).getString("id");
-                                            filters.add(ForgeRegistries.ITEMS.getValue(new ResourceLocation(tag2)));
+                                        for (int k = 0; k < tagList2.size(); k++) {
+                                            String itemId = tagList2.getCompound(k).getString("id");
+                                            int slot = tagList2.getCompound(k).getInt("Slot");
+                                            filters.set(slot, ForgeRegistries.ITEMS.getValue(new ResourceLocation(itemId)));
                                         }
                                     }
 
                                     if (filters.isEmpty() || (!isInsertUpgrade || ((mode == IFilter.MODE_WHITELIST) == filters.contains(itemInInventory.getItem())))) {
                                         network.getItemStorageTracker().changed(player, itemInInventory.copy());
 
-                                        if(isInsertUpgrade) {
-                                            if(network.insertItem(itemInInventory, itemInInventory.getCount(), Action.SIMULATE).isEmpty()) {
+                                        if (isInsertUpgrade) {
+                                            if (network.insertItem(itemInInventory, itemInInventory.getCount(), Action.SIMULATE).isEmpty()) {
                                                 network.insertItem(itemInInventory, itemInInventory.getCount(), Action.PERFORM);
                                                 player.getInventory().setItem(index, ItemStack.EMPTY);
                                             }
                                         } else {
-                                            if(filters.isEmpty()) return;
+                                            if (filters.isEmpty()) return;
 
-                                            for(int k = 0; k < filters.size(); k++) {
-                                                if(filters.get(k) == Items.AIR) continue;
-                                                if(k != selectedInventorySlots[j] - 1) continue;
+                                            for (int k = 0; k < filters.size(); k++) {
+                                                if (filters.get(k) == null || filters.get(k) == Items.AIR) continue;
+                                                if (k != selectedInventorySlots[j] - 1) continue;
 
                                                 StackListEntry<ItemStack> stackEntry = network.getItemStorageCache().getList().getEntry(filters.get(k).getDefaultInstance(), IComparer.COMPARE_NBT);
                                                 if (stackEntry != null) {

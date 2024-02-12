@@ -22,14 +22,14 @@ import java.util.List;
 @Mixin(WirelessGrid.class)
 public abstract class MixinWirelessGrid implements IGridUpgrade {
     @Unique
-    private List<IFilter> rsInsertExportUpgrade$upgrades;
+    private List<IFilter> rsInsertExportUpgrade$filter;
     @Unique
     private UpgradeItemHandler rsInsertExportUpgrade$upgrade;
 
     @Inject(at = @At("TAIL"), method = "<init>")
     protected void WirelessGridConstructor(ItemStack stack, MinecraftServer server, PlayerSlot playerSlot, CallbackInfo ci) {
-        this.rsInsertExportUpgrade$upgrades = new ArrayList<>();
-        this.rsInsertExportUpgrade$upgrade = (UpgradeItemHandler) new UpgradeItemHandler(rsInsertExportUpgrade$upgrades)
+        this.rsInsertExportUpgrade$filter = new ArrayList<>();
+        this.rsInsertExportUpgrade$upgrade = (UpgradeItemHandler) new UpgradeItemHandler(rsInsertExportUpgrade$filter)
                 .addListener((handler, slot, reading) -> {
                     if (!stack.hasTag()) {
                         stack.setTag(new CompoundTag());
@@ -45,8 +45,8 @@ public abstract class MixinWirelessGrid implements IGridUpgrade {
 
     @Unique
     @Override
-    public List<IFilter> rsInsertExportUpgrade$getUpgrades() {
-        return rsInsertExportUpgrade$upgrades;
+    public List<IFilter> rsInsertExportUpgrade$getFilter() {
+        return rsInsertExportUpgrade$filter;
     }
 
     @Unique
