@@ -24,8 +24,6 @@ public class UpgradeScreen extends BaseScreen<UpgradeContainerMenu> {
     private static final ResourceLocation TEXTURE = new ResourceLocation(RSInsertExportUpgrade.MOD_ID, "textures/gui/upgrade.png");
     private static final ResourceLocation CHECKMARK = new ResourceLocation(RSInsertExportUpgrade.MOD_ID, "textures/gui/checkmark.png");
     private static final ResourceLocation XMARK = new ResourceLocation(RSInsertExportUpgrade.MOD_ID, "textures/gui/xmark.png");
-    private static final Color[] slotColors = {Color.RED, new Color(28, 134, 238), new Color(124, 252, 0), new Color(106, 61, 154), new Color(255, 127, 0), new Color(166, 124, 0), new Color(126, 192, 238), new Color(251, 154, 153), new Color(144, 238, 144),
-            new Color(202, 178, 214), new Color(253, 191, 111), new Color(139, 139, 0), new Color(238, 230, 133), new Color(176, 48, 96), new Color(255, 131, 250), new Color(255, 20, 147), new Color(0, 0, 255), new Color(165, 42, 42)};
 
     private int mode;
     private final int[] selectedInventorySlots;
@@ -79,12 +77,12 @@ public class UpgradeScreen extends BaseScreen<UpgradeContainerMenu> {
 
             if (slot instanceof FilterSlot) {
                 if (type != UpgradeType.INSERT) {
-                    renderSlotHighlight(graphics, type, font, slot.x + leftPos, slot.y + topPos/*, slotColors[i - 36].hashCode()*/, true, i - 36 + 1);
+                    renderSlotHighlight(graphics, type, font, slot.x + leftPos, slot.y + topPos, true, i - 36 + 1);
                 }
             } else if (selectedInventorySlots[i] >= 1) {
-                renderSlotHighlight(graphics, type, font, slot.x + leftPos, slot.y + topPos/*, slotColors[selectedInventorySlots[i] - 1].hashCode()*/, true, selectedInventorySlots[i]);
+                renderSlotHighlight(graphics, type, font, slot.x + leftPos, slot.y + topPos, true, selectedInventorySlots[i]);
             } else if (selectedInventorySlots[i] == 0) {
-                renderSlotHighlight(graphics, type, font, slot.x + leftPos, slot.y + topPos/*, slotColors[selectedInventorySlots[i] - 1].hashCode()*/, false, -1);
+                renderSlotHighlight(graphics, type, font, slot.x + leftPos, slot.y + topPos, false, -1);
             }
         }
     }
@@ -104,7 +102,7 @@ public class UpgradeScreen extends BaseScreen<UpgradeContainerMenu> {
             } else {
                 if (mouseButton == 0) {
                     //Left click
-                    if (selectedInventorySlots[slotId] >= slotColors.length) {
+                    if (selectedInventorySlots[slotId] >= 18) {
                         selectedInventorySlots[slotId] = 0;
                     } else {
                         selectedInventorySlots[slotId] += 1;
