@@ -65,7 +65,7 @@ public abstract class MixinWirelessGridItem extends Item {
         if (entity instanceof Player player) {
             boolean inRange = false;
 
-            INetwork network = rsInsertExportUpgrade$getNetwork(level.getServer(), stack, player::sendSystemMessage);
+            INetwork network = rsInsertExportUpgrade$getNetwork(level.getServer(), stack);
 
             if (network == null) return;
 
@@ -219,35 +219,28 @@ public abstract class MixinWirelessGridItem extends Item {
     }
 
     @Unique
-    public INetwork rsInsertExportUpgrade$getNetwork(MinecraftServer server, ItemStack stack, Consumer<Component> onError) {
-        MutableComponent notFound = Component.translatable("misc.refinedstorage.network_item.not_found");
-
+    public INetwork rsInsertExportUpgrade$getNetwork(MinecraftServer server, ItemStack stack) {
         if (!isValid(stack)) {
-            onError.accept(notFound);
             return null;
         }
 
         ResourceKey<Level> dimension = getDimension(stack);
         if (dimension == null) {
-            onError.accept(notFound);
             return null;
         }
 
         Level nodeLevel = server.getLevel(dimension);
         if (nodeLevel == null) {
-            onError.accept(notFound);
             return null;
         }
 
         BlockPos pos = new BlockPos(getX(stack), getY(stack), getZ(stack));
         if (!nodeLevel.isLoaded(pos)) {
-            onError.accept(notFound);
             return null;
         }
 
         INetwork network = NetworkUtils.getNetworkFromNode(NetworkUtils.getNodeFromBlockEntity(nodeLevel.getBlockEntity(pos)));
         if (network == null) {
-            onError.accept(notFound);
             return null;
         }
 

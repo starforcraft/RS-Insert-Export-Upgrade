@@ -88,11 +88,6 @@ public class UpgradeScreen extends BaseScreen<UpgradeContainerMenu> {
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-        super.render(graphics, mouseX, mouseY, partialTicks);
-    }
-
-    @Override
     protected void slotClicked(Slot slot, int slotId, int mouseButton, ClickType type) {
         super.slotClicked(slot, slotId, mouseButton, type);
 
