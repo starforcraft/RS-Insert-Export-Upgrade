@@ -9,17 +9,28 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nonnull;
 
 public class UpgradePlayerSlot extends Slot {
+    private boolean cancelPickup = false;
+
     public UpgradePlayerSlot(Container inventory, int inventoryIndex, int x, int y) {
         super(inventory, inventoryIndex, x, y);
     }
 
     @Override
     public boolean mayPlace(@Nonnull ItemStack stack) {
-        return false;
+        return true;
     }
 
     @Override
     public boolean mayPickup(@NotNull Player player) {
-        return false;
+        if(cancelPickup) {
+            cancelPickup = false;
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public void setCancelPickup(boolean cancelPickup) {
+        this.cancelPickup = cancelPickup;
     }
 }

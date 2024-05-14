@@ -21,6 +21,7 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
 public class UpgradeItem extends Item {
+    public static final String NBT_COMPARE = "Compare";
     public static final String NBT_MODE = "Mode";
     public static final String NBT_SELECTED_INVENTORY_SLOTS = "SelectedInventorySlots";
 
@@ -31,27 +32,44 @@ public class UpgradeItem extends Item {
         this.type = type;
     }
 
+    public static int getCompare(ItemStack stack) {
+        return (stack.hasTag() && stack.getTag().contains(NBT_COMPARE)) ? stack.getTag().getInt(NBT_COMPARE) : IFilter.MODE_BLACKLIST;
+    }
+
+    public static void setCompare(ItemStack stack, int compare, int selectedSideButton) {
+        setNBT(stack, compare, selectedSideButton, NBT_COMPARE);
+    }
+
     public static int getMode(ItemStack stack) {
         return (stack.hasTag() && stack.getTag().contains(NBT_MODE)) ? stack.getTag().getInt(NBT_MODE) : IFilter.MODE_BLACKLIST;
     }
 
     public static void setMode(ItemStack stack, int mode, int selectedSideButton) {
+        setNBT(stack, mode, selectedSideButton, NBT_MODE);
+    }
+
+    private static void setNBT(ItemStack stack, int value, int selectedSideButton, String nbt) {
         if (stack.getItem() == ModItems.INSERT_UPGRADE.get() || stack.getItem() == ModItems.EXPORT_UPGRADE.get()) {
             if (!stack.hasTag()) {
                 stack.setTag(new CompoundTag());
             }
 
-            stack.getTag().putInt(NBT_MODE, mode);
+            stack.getTag().putInt(nbt, value);
         } else {
-            if (stack.getTag().contains("Inventory_2")) {
-                ListTag tagList = stack.getTag().getList("Inventory_2", Tag.TAG_COMPOUND);
-                CompoundTag tag = (CompoundTag) tagList.getCompound(selectedSideButton).get("tag");
+            if (stack.getTag().contains("Inventory_1")) {
+                ListTag tagList = stack.getTag().getList("Inventory_1", Tag.TAG_COMPOUND);
+                CompoundTag tag = (CompoundTag) tagList.stream()
+                        .filter(x -> x.toString().contains("Slot:" + selectedSideButton))
+                        .findFirst()
+                        .orElse(null);
 
-                if (tag == null) {
-                    tagList.getCompound(selectedSideButton).put("tag", new CompoundTag());
+                if(tag != null) {
+                    if(!tag.contains("tag")) {
+                        tag.put("tag", new CompoundTag());
+                    }
+
+                    ((CompoundTag) tag.get("tag")).putInt(nbt, value);
                 }
-
-                ((CompoundTag) tagList.getCompound(selectedSideButton).get("tag")).putInt(NBT_MODE, mode);
             }
         }
     }
@@ -68,15 +86,20 @@ public class UpgradeItem extends Item {
 
             stack.getTag().putIntArray(NBT_SELECTED_INVENTORY_SLOTS, selectedInventorySlots);
         } else {
-            if (stack.getTag().contains("Inventory_2")) {
-                ListTag tagList = stack.getTag().getList("Inventory_2", Tag.TAG_COMPOUND);
-                CompoundTag tag = (CompoundTag) tagList.getCompound(selectedSideButton).get("tag");
+            if (stack.getTag().contains("Inventory_1")) {
+                ListTag tagList = stack.getTag().getList("Inventory_1", Tag.TAG_COMPOUND);
+                CompoundTag tag = (CompoundTag) tagList.stream()
+                        .filter(x -> x.toString().contains("Slot:" + selectedSideButton))
+                        .findFirst()
+                        .orElse(null);
 
-                if (tag == null) {
-                    tagList.getCompound(selectedSideButton).put("tag", new CompoundTag());
+                if(tag != null) {
+                    if(!tag.contains("tag")) {
+                        tag.put("tag", new CompoundTag());
+                    }
+
+                    ((CompoundTag) tag.get("tag")).putIntArray(NBT_SELECTED_INVENTORY_SLOTS, selectedInventorySlots);
                 }
-
-                ((CompoundTag) tagList.getCompound(selectedSideButton).get("tag")).putIntArray(NBT_SELECTED_INVENTORY_SLOTS, selectedInventorySlots);
             }
         }
     }

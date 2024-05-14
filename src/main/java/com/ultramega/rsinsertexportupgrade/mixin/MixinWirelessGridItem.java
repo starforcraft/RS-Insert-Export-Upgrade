@@ -1,31 +1,32 @@
 package com.ultramega.rsinsertexportupgrade.mixin;
 
 import com.refinedmods.refinedstorage.RS;
+import com.refinedmods.refinedstorage.api.autocrafting.task.ICraftingTask;
 import com.refinedmods.refinedstorage.api.network.INetwork;
 import com.refinedmods.refinedstorage.api.network.INetworkNodeGraphEntry;
 import com.refinedmods.refinedstorage.api.network.IWirelessTransmitter;
 import com.refinedmods.refinedstorage.api.network.node.INetworkNode;
 import com.refinedmods.refinedstorage.api.util.Action;
-import com.refinedmods.refinedstorage.api.util.IComparer;
-import com.refinedmods.refinedstorage.api.util.IFilter;
 import com.refinedmods.refinedstorage.api.util.StackListEntry;
 import com.refinedmods.refinedstorage.item.WirelessGridItem;
 import com.refinedmods.refinedstorage.util.NetworkUtils;
 import com.refinedmods.refinedstorageaddons.item.WirelessCraftingGridItem;
 import com.ultramega.rsinsertexportupgrade.RSInsertExportUpgrade;
+import com.ultramega.rsinsertexportupgrade.inventory.item.ConfiguredItemsInFilterItemHandler;
 import com.ultramega.rsinsertexportupgrade.item.UpgradeItem;
+import com.ultramega.rsinsertexportupgrade.util.IWhitelistBlacklist;
 import com.ultramega.universalgrid.item.WirelessUniversalGridItem;
 import net.gigabit101.rebornstorage.items.ItemWirelessGrid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -36,15 +37,13 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
-import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import static com.refinedmods.refinedstorage.item.NetworkItem.*;
 
@@ -87,8 +86,8 @@ public abstract class MixinWirelessGridItem extends Item {
 
             if (!inRange) return;
 
-            if (stack.getTag().contains("Inventory_2")) {
-                ListTag tagList = stack.getTag().getList("Inventory_2", Tag.TAG_COMPOUND);
+            if (stack.getTag().contains("Inventory_1")) {
+                ListTag tagList = stack.getTag().getList("Inventory_1", Tag.TAG_COMPOUND);
 
                 for (int i = 0; i < tagList.size(); i++) {
                     boolean isInsertUpgrade = tagList.getCompound(i).getString("id").equals(new ResourceLocation(RSInsertExportUpgrade.MOD_ID, "insert_upgrade").toString());
@@ -97,6 +96,7 @@ public abstract class MixinWirelessGridItem extends Item {
                     if (tag != null) {
                         int[] selectedInventorySlots = tag.getIntArray(UpgradeItem.NBT_SELECTED_INVENTORY_SLOTS);
                         int mode = isInsertUpgrade ? tag.getInt(UpgradeItem.NBT_MODE) : -1;
+                        int compare = tag.getInt(UpgradeItem.NBT_COMPARE);
 
                         for (int j = 0; j < selectedInventorySlots.length; j++) {
                             if (selectedInventorySlots[j] >= 1) {
@@ -104,69 +104,99 @@ public abstract class MixinWirelessGridItem extends Item {
                                 ItemStack itemInInventory = player.getInventory().getItem(index);
 
                                 if ((!isInsertUpgrade || itemInInventory.getItem() != Items.AIR) && itemInInventory != stack) {
-                                    List<Item> filters = Arrays.asList(new Item[18]);
-                                    if (tag.contains("Inventory_0")) {
-                                        ListTag tagList2 = tag.getList("Inventory_0", Tag.TAG_COMPOUND);
+                                    // Get filters
+                                    NonNullList<ItemStack> filter = new ConfiguredItemsInFilterItemHandler(tag).getConfiguredItems();
 
-                                        for (int k = 0; k < tagList2.size(); k++) {
-                                            String itemId = tagList2.getCompound(k).getString("id");
-                                            int slot = tagList2.getCompound(k).getInt("Slot");
-                                            filters.set(slot, ForgeRegistries.ITEMS.getValue(new ResourceLocation(itemId)));
-                                        }
-                                    }
+                                    network.getItemStorageTracker().changed(player, itemInInventory.copy());
 
-                                    if (filters.isEmpty() || (!isInsertUpgrade || ((mode == IFilter.MODE_WHITELIST) == filters.contains(itemInInventory.getItem())))) {
-                                        network.getItemStorageTracker().changed(player, itemInInventory.copy());
-
-                                        if (isInsertUpgrade) {
+                                    if (isInsertUpgrade) {
+                                        if(IWhitelistBlacklist.acceptsItem(filter, mode, compare, itemInInventory)) {
                                             if (network.insertItem(itemInInventory, itemInInventory.getCount(), Action.SIMULATE).isEmpty()) {
                                                 network.insertItem(itemInInventory, itemInInventory.getCount(), Action.PERFORM);
                                                 player.getInventory().setItem(index, ItemStack.EMPTY);
                                             }
-                                        } else {
-                                            if (filters.isEmpty()) return;
+                                        }
+                                    } else {
+                                        if (filter.isEmpty()) return;
 
-                                            for (int k = 0; k < filters.size(); k++) {
-                                                if (filters.get(k) == null || filters.get(k) == Items.AIR) continue;
-                                                if (k != selectedInventorySlots[j] - 1) continue;
+                                        for (int k = 0; k < filter.size(); k++) {
+                                            if (filter.get(k).getItem() == Items.AIR) continue;
+                                            if (k != selectedInventorySlots[j] - 1) continue;
 
-                                                StackListEntry<ItemStack> stackEntry = network.getItemStorageCache().getList().getEntry(filters.get(k).getDefaultInstance(), IComparer.COMPARE_NBT);
-                                                if (stackEntry != null) {
-                                                    ItemStack item = network.getItemStorageCache().getList().get(stackEntry.getId());
+                                            // Get upgrades
+                                            List<com.refinedmods.refinedstorage.item.UpgradeItem.Type> upgrades = new ArrayList<>();
+                                            if (tag.contains("Inventory_1")) {
+                                                ListTag tagList2 = tag.getList("Inventory_1", Tag.TAG_COMPOUND);
 
-                                                    // We copy here because some mods change the NBT tag of an item after getting the stack limit
-                                                    int maxItemSize = item.getItem().getMaxStackSize(item.copy());
+                                                for (int l = 0; l < tagList2.size(); l++) {
+                                                    String itemId = tagList2.getCompound(l).getString("id");
+                                                    if(itemId.equals(RS.ID + ":stack_upgrade")) {
+                                                        upgrades.add(com.refinedmods.refinedstorage.item.UpgradeItem.Type.STACK);
+                                                    } else if(itemId.equals(RS.ID + ":crafting_upgrade")) {
+                                                        upgrades.add(com.refinedmods.refinedstorage.item.UpgradeItem.Type.CRAFTING);
+                                                    }
+                                                }
+                                            }
 
-                                                    int size = Math.min(64, maxItemSize);
+                                            int stackInteractionSize = upgrades.contains(com.refinedmods.refinedstorage.item.UpgradeItem.Type.STACK) ? 64 : 1;
 
-                                                    // Do this before actually extracting, since external storage sends updates as soon as a change happens (so before the storage tracker used to track)
-                                                    network.getItemStorageTracker().changed(player, item.copy());
+                                            ItemStack requestItemStack = filter.get(k);
+                                            StackListEntry<ItemStack> stackEntry = network.getItemStorageCache().getList().getEntry(requestItemStack, compare);
+                                            if (stackEntry != null) {
+                                                ItemStack item = network.getItemStorageCache().getList().get(stackEntry.getId());
 
-                                                    ItemStack took = network.extractItem(item, size, Action.SIMULATE);
+                                                // We copy here because some mods change the NBT tag of an item after getting the stack limit
+                                                int maxItemSize = item.getItem().getMaxStackSize(item.copy());
 
-                                                    if (!took.isEmpty()) {
-                                                        Optional<IItemHandler> playerInventory = player.getCapability(ForgeCapabilities.ITEM_HANDLER, Direction.UP).resolve();
-                                                        if (playerInventory.isPresent()) {
-                                                            ItemStack remainder = playerInventory.get().insertItem(index, took, true);
-                                                            if (remainder.getCount() != took.getCount()) {
-                                                                ItemStack inserted = network.extractItem(item, size - remainder.getCount(), Action.PERFORM);
-                                                                playerInventory.get().insertItem(index, inserted, false);
-                                                                took.setCount(remainder.getCount());
-                                                            }
+                                                int size = Math.min(stackInteractionSize, maxItemSize);
 
-                                                            if (!took.isEmpty() && rsInsertExportUpgrade$insertItemStacked(playerInventory.get(), index, took, true).isEmpty()) {
-                                                                took = network.extractItem(item, size, Action.PERFORM);
+                                                // Do this before actually extracting, since external storage sends updates as soon as a change happens (so before the storage tracker used to track)
+                                                network.getItemStorageTracker().changed(player, item.copy());
 
-                                                                rsInsertExportUpgrade$insertItemStacked(playerInventory.get(), index, took, false);
+                                                ItemStack took = network.extractItem(item, size, Action.SIMULATE);
+
+                                                if (!took.isEmpty()) {
+                                                    Optional<IItemHandler> playerInventory = player.getCapability(ForgeCapabilities.ITEM_HANDLER, Direction.UP).resolve();
+                                                    if (playerInventory.isPresent()) {
+                                                        ItemStack remainder = playerInventory.get().insertItem(index, took, true);
+                                                        if (remainder.getCount() != took.getCount()) {
+                                                            ItemStack inserted = network.extractItem(item, size - remainder.getCount(), Action.PERFORM);
+                                                            playerInventory.get().insertItem(index, inserted, false);
+                                                            took.setCount(remainder.getCount());
+                                                        }
+
+                                                        if (!took.isEmpty() && rsInsertExportUpgrade$insertItemStacked(playerInventory.get(), index, took, true).isEmpty()) {
+                                                            took = network.extractItem(item, size, Action.PERFORM);
+
+                                                            rsInsertExportUpgrade$insertItemStacked(playerInventory.get(), index, took, false);
+                                                        }
+                                                    }
+                                                }
+                                            } else {
+                                                //Try requesting item for auto crafting
+                                                if(upgrades.contains(com.refinedmods.refinedstorage.item.UpgradeItem.Type.CRAFTING)) {
+                                                    if(itemInInventory.getMaxStackSize() > itemInInventory.getCount() && player instanceof ServerPlayer serverPlayer) {
+                                                        StackListEntry<ItemStack> craftingEntry = network.getItemStorageCache().getCraftablesList().getEntry(requestItemStack, compare);
+                                                        if(craftingEntry == null) continue;
+
+                                                        boolean alreadyRequesting = false;
+                                                        for(ICraftingTask task : network.getCraftingManager().getTasks()) {
+                                                            if(task.getRequested().getItem().getItem() == requestItemStack.getItem()) {
+                                                                alreadyRequesting = true;
+                                                                break;
                                                             }
                                                         }
+                                                        if(alreadyRequesting) continue;
+
+                                                        int requestSize = Math.min(stackInteractionSize, itemInInventory.getMaxStackSize() - itemInInventory.getCount());
+                                                        network.getItemGridHandler().onCraftingRequested(serverPlayer, craftingEntry.getId(), requestSize);
                                                     }
                                                 }
                                             }
                                         }
-
-                                        network.getNetworkItemManager().drainEnergy(player, isInsertUpgrade ? RS.SERVER_CONFIG.getWirelessGrid().getInsertUsage() : RS.SERVER_CONFIG.getWirelessGrid().getExtractUsage());
                                     }
+
+                                    network.getNetworkItemManager().drainEnergy(player, isInsertUpgrade ? RS.SERVER_CONFIG.getWirelessGrid().getInsertUsage() : RS.SERVER_CONFIG.getWirelessGrid().getExtractUsage());
                                 }
                             }
                         }
@@ -239,11 +269,6 @@ public abstract class MixinWirelessGridItem extends Item {
             return null;
         }
 
-        INetwork network = NetworkUtils.getNetworkFromNode(NetworkUtils.getNodeFromBlockEntity(nodeLevel.getBlockEntity(pos)));
-        if (network == null) {
-            return null;
-        }
-
-        return network;
+        return NetworkUtils.getNetworkFromNode(NetworkUtils.getNodeFromBlockEntity(nodeLevel.getBlockEntity(pos)));
     }
 }

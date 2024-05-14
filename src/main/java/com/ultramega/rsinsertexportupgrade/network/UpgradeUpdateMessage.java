@@ -11,23 +11,26 @@ import java.util.function.Supplier;
 
 public class UpgradeUpdateMessage {
     private final int type;
+    private final int compare;
     private final int mode;
     private final int[] selectedInventorySlots;
     private final int selectedSideButton;
 
-    public UpgradeUpdateMessage(int type, int mode, int[] selectedInventorySlots, int selectedSideButton) {
+    public UpgradeUpdateMessage(int type, int compare, int mode, int[] selectedInventorySlots, int selectedSideButton) {
         this.type = type;
+        this.compare = compare;
         this.mode = mode;
         this.selectedInventorySlots = selectedInventorySlots;
         this.selectedSideButton = selectedSideButton;
     }
 
     public static UpgradeUpdateMessage decode(FriendlyByteBuf buf) {
-        return new UpgradeUpdateMessage(buf.readInt(), buf.readInt(), buf.readVarIntArray(), buf.readInt());
+        return new UpgradeUpdateMessage(buf.readInt(), buf.readInt(), buf.readInt(), buf.readVarIntArray(), buf.readInt());
     }
 
     public static void encode(UpgradeUpdateMessage message, FriendlyByteBuf buf) {
         buf.writeInt(message.type);
+        buf.writeInt(message.compare);
         buf.writeInt(message.mode);
         buf.writeVarIntArray(message.selectedInventorySlots);
         buf.writeInt(message.selectedSideButton);
@@ -37,6 +40,7 @@ public class UpgradeUpdateMessage {
         Player player = ctx.get().getSender();
         if (player != null && player.containerMenu instanceof UpgradeContainerMenu containerMenu) {
             ctx.get().enqueueWork(() -> {
+                UpgradeItem.setCompare(containerMenu.getGridItem(), message.compare, message.selectedSideButton);
                 UpgradeItem.setSelectedInventorySlots(containerMenu.getGridItem(), message.selectedInventorySlots, message.selectedSideButton);
                 UpgradeItem.setMode(containerMenu.getGridItem(), message.mode, message.selectedSideButton);
             });
