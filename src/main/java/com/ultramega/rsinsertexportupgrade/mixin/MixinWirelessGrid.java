@@ -35,11 +35,11 @@ public abstract class MixinWirelessGrid implements IGridUpgrade {
                         stack.setTag(new CompoundTag());
                     }
 
-                    StackUtils.writeItems(handler, 1, stack.getTag());
+                    StackUtils.writeItems(handler, 2, stack.getTag());
                 });
 
         if (stack.hasTag()) {
-            StackUtils.readItems(rsInsertExportUpgrade$upgrade, 1, stack.getTag());
+            StackUtils.readItems(rsInsertExportUpgrade$upgrade, 2, stack.getTag());
         }
     }
 

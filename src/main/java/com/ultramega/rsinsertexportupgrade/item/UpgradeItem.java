@@ -56,8 +56,8 @@ public class UpgradeItem extends Item {
 
             stack.getTag().putInt(nbt, value);
         } else {
-            if (stack.getTag().contains("Inventory_1")) {
-                ListTag tagList = stack.getTag().getList("Inventory_1", Tag.TAG_COMPOUND);
+            if (stack.getTag().contains("Inventory_2")) {
+                ListTag tagList = stack.getTag().getList("Inventory_2", Tag.TAG_COMPOUND);
                 CompoundTag tag = (CompoundTag) tagList.stream()
                         .filter(x -> x.toString().contains("Slot:" + selectedSideButton))
                         .findFirst()
@@ -86,8 +86,8 @@ public class UpgradeItem extends Item {
 
             stack.getTag().putIntArray(NBT_SELECTED_INVENTORY_SLOTS, selectedInventorySlots);
         } else {
-            if (stack.getTag().contains("Inventory_1")) {
-                ListTag tagList = stack.getTag().getList("Inventory_1", Tag.TAG_COMPOUND);
+            if (stack.getTag().contains("Inventory_2")) {
+                ListTag tagList = stack.getTag().getList("Inventory_2", Tag.TAG_COMPOUND);
                 CompoundTag tag = (CompoundTag) tagList.stream()
                         .filter(x -> x.toString().contains("Slot:" + selectedSideButton))
                         .findFirst()

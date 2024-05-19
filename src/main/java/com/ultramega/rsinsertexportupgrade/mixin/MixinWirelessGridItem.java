@@ -86,8 +86,8 @@ public abstract class MixinWirelessGridItem extends Item {
 
             if (!inRange) return;
 
-            if (stack.getTag().contains("Inventory_1")) {
-                ListTag tagList = stack.getTag().getList("Inventory_1", Tag.TAG_COMPOUND);
+            if (stack.getTag().contains("Inventory_2")) {
+                ListTag tagList = stack.getTag().getList("Inventory_2", Tag.TAG_COMPOUND);
 
                 for (int i = 0; i < tagList.size(); i++) {
                     boolean isInsertUpgrade = tagList.getCompound(i).getString("id").equals(new ResourceLocation(RSInsertExportUpgrade.MOD_ID, "insert_upgrade").toString());

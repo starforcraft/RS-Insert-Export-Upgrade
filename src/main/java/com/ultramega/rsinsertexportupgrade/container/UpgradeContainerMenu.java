@@ -31,7 +31,7 @@ public class UpgradeContainerMenu extends BaseContainerMenu {
             this.gridItem = stack;
 
             Container container = new SimpleContainer(2);
-            StackUtils.readItems(container, 1, stack.getTag());
+            StackUtils.readItems(container, 2, stack.getTag());
 
             if (container.getItem(selectedSideButton).getItem() == (type == UpgradeType.INSERT ? ModItems.INSERT_UPGRADE.get() : ModItems.EXPORT_UPGRADE.get())) {
                 this.upgradeItem = container.getItem(selectedSideButton);
